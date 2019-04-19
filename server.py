@@ -40,13 +40,13 @@ def main():
         request = library.ReadRequest(client_socket)
         command, filepath = library.ParseRequest(request)
         
-        if command == 'GET':
+        if command == 'GET' and filepath is not None:
             newClientThread = ClientThread(client_socket, filepath)
             newClientThread.start()
             clientThreads.append(newClientThread)
 
         else:
-            client_socket.send(('Invalid Command {}\n'.format(command)).encode())
+            client_socket.send(('Invalid request!\n').encode())
             client_socket.close()
 
     for t in clientThreads:

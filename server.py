@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from threading import Thread
 import library
+import os
 
 LISTENING_PORT = 8080
 
@@ -17,11 +18,13 @@ class ClientThread(Thread):
         try:
             with open(self.filepath, 'rb') as f:
                 # Open the file in binary and send it to client.
-                self.sock.send(f.read())
+                filename = os.path.basename(self.filepath)
+                # TODO: attach filename.
+                self.sock.send(b'f' + f.read())
 
         except FileNotFoundError:
             # Inform file not found.
-            self.sock.send(b'File not found!\n')
+            self.sock.send(b'tFile not found!\n')
 
         finally:
             self.sock.close()
@@ -46,7 +49,7 @@ def main():
             clientThreads.append(newClientThread)
 
         else:
-            client_socket.send(('Invalid request!\n').encode())
+            client_socket.send(('tInvalid request!\n').encode())
             client_socket.close()
 
     for t in clientThreads:

@@ -4,8 +4,10 @@ from __future__ import print_function
 import library
 import socket
 import sys
+import time
 
-MAX_SERVER_RESPONSE_LEN = 256
+# Macro to indicate the max length of server's text response.
+MAX_SVR_RESP_TXT_LEN = 256
 
 def createFile(sock):
     with open('received_file', 'wb') as f:
@@ -23,7 +25,7 @@ def processResponse(sock):
     # Simply print the error if response is a text, else make a file using the
     # bytes.
     if restype == b't':
-        print(sock.recv(MAX_SERVER_RESPONSE_LEN).decode().strip('\n'))
+        print(sock.recv(MAX_SVR_RESP_TXT_LEN).decode().strip('\n'))
     elif restype == b'f':
         createFile(sock)
         print("File received and successfully created!")
@@ -37,8 +39,11 @@ def main(serverAddr, serverPort):
     
     try:
         # Send the command line request to server and return the response.
+        startTime = time.time() 
         clientSock.sendall(cmdLine.encode())
         processResponse(clientSock)
+        RTT = time.time() - startTime
+        print("Round trip time = ", RTT)
     
     finally:
         clientSock.close()

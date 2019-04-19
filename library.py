@@ -4,8 +4,20 @@ from __future__ import print_function
 import socket
 import time
 
-
 COMMAND_BUFFER_SIZE = 256
+
+def GetIPv6Addr(addr, port):
+    # Try to detect whether IPv6 is supported at the present system and
+    # fetch the IPv6 address.
+    if not socket.has_ipv6:
+        raise Exception("the local machine has no IPv6 support enabled")
+
+    addrs = socket.getaddrinfo(addr, port, socket.AF_INET6, 0, socket.SOL_TCP)
+
+    if len(addrs) == 0:
+        raise Exception("there is no IPv6 address configured for the address")
+
+    return addrs[0][-1]
 
 
 def CreateServerSocket(port):
@@ -17,18 +29,7 @@ def CreateServerSocket(port):
     Returns:
         An socket that implements TCP/IP.
     """
-    # try to detect whether IPv6 is supported at the present system and
-    # fetch the IPv6 address of localhost.
-    if not socket.has_ipv6:
-        raise Exception("the local machine has no IPv6 support enabled")
-
-    addrs = socket.getaddrinfo("localhost", port, socket.AF_INET6, 0, socket.SOL_TCP)
-
-    if len(addrs) == 0:
-        raise Exception("there is no IPv6 address configured for localhost")
-
-    entry0 = addrs[0]
-    sockaddr = entry0[-1]
+    sockaddr = GetIPv6Addr("localhost", port)
 
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     server.bind(sockaddr)
@@ -41,9 +42,10 @@ def ConnectClientToServer(server_sock):
 
 
 def CreateClientSocket(server_addr, port):
-	client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-	client.connect((server_addr, port))
-	return client
+    sockaddr = GetIPv6Addr(server_addr, port)
+    client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    client.connect(sockaddr)
+    return client
 
 
 def ReadRequest(sock):

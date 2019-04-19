@@ -40,12 +40,12 @@ def ReadRequest(sock):
 
 def ParseRequest(request):
     """Parses the request and returns the command name and filepath."""
-    args = command.strip().split(' ')
+    args = request.strip().split(' ')
     command = None
     if args:
         command = args[0]
     filepath = None
     if len(args) > 1:
         filepath = ' '.join(args[1:])
-    return commmand, filepath
+    return command, filepath
 

@@ -17,8 +17,21 @@ def CreateServerSocket(port):
     Returns:
         An socket that implements TCP/IP.
     """
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind(('localhost', port))
+    # try to detect whether IPv6 is supported at the present system and
+    # fetch the IPv6 address of localhost.
+    if not socket.has_ipv6:
+        raise Exception("the local machine has no IPv6 support enabled")
+
+    addrs = socket.getaddrinfo("localhost", port, socket.AF_INET6, 0, socket.SOL_TCP)
+
+    if len(addrs) == 0:
+        raise Exception("there is no IPv6 address configured for localhost")
+
+    entry0 = addrs[0]
+    sockaddr = entry0[-1]
+
+    server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    server.bind(sockaddr)
     server.listen()
     return server
 
@@ -28,7 +41,7 @@ def ConnectClientToServer(server_sock):
 
 
 def CreateClientSocket(server_addr, port):
-	client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 	client.connect((server_addr, port))
 	return client
 

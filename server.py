@@ -8,10 +8,8 @@ LISTENING_PORT = 8080
 
 class ClientThread(Thread):
 
-    def __init__(self, ip, port, sock, filepath):
+    def __init__(self, sock, filepath):
         Thread.__init__(self)
-        self.ip = ip
-        self.port = port
         self.sock = sock
         self.filepath = filepath
 
@@ -36,18 +34,14 @@ def main():
     # Handle commands indefinitely (^C to exit)
     while True:
         # Wait until a client connects, then get a socket for the  client.
-        client_socket, (address, port) = library.ConnectClientToServer(server_socket)
-        print('Received connection from %s:%d' % (address, port))
+        client_socket, addr = library.ConnectClientToServer(server_socket)
         
         # Read the request.
         request = library.ReadRequest(client_socket)
         command, filepath = library.ParseRequest(request)
         
         if command == 'GET':
-            newClientThread = ClientThread(address, 
-                                           port, 
-                                           client_socket,
-                                           filepath)
+            newClientThread = ClientThread(client_socket, filepath)
             newClientThread.start()
             clientThreads.append(newClientThread)
 

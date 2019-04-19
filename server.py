@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import print_function
 from threading import Thread
 import library
+import sys
 
 LISTENING_PORT = 8080
 
@@ -27,7 +28,17 @@ class ClientThread(Thread):
             self.sock.close()
 
 
-def main():
+class ServerThread(Thread):
+
+    def __init__(self, serverFunc):
+        Thread.__init__(self)
+        self.serverFunc = serverFunc
+
+    def run(self):
+        self.serverFunc()
+
+
+def server():
     server_socket = library.CreateServerSocket(LISTENING_PORT)
     clientThreads = []
     
@@ -54,5 +65,19 @@ def main():
 
     server_socket.close()
 
+
+def startServer(daemon=True):
+    serverThread = ServerThread(server)
+    if daemon:
+        serverThread.daemon = True
+        print("Daemon set!")
+    serverThread.start()
+    print("Daemon started!")
+
+
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1 and sys.argv[1] == "fg":
+        startServer(daemon=False)
+    else:
+        startServer()
+

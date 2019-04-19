@@ -4,9 +4,7 @@ from __future__ import print_function
 import socket
 import time
 
-
 COMMAND_BUFFER_SIZE = 256
-
 
 def CreateServerSocket(port):
     """Creates a socket that listens on a specified port.

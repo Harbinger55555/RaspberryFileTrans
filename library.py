@@ -27,7 +27,7 @@ def ConnectClientToServer(server_socket):
     Returns:
         A socket and an address that is bound to that socket
     """
-    return server_sock.accept()
+    return server_socket.accept()
 
 def CreateClientSocket(server_addr, port):
 	client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

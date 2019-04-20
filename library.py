@@ -21,16 +21,18 @@ def GetIPv6Addr(addr, port):
     return addrs[0][-1]
 
 
-def CreateServerSocket(port):
+def CreateServerSocket(addr, port):
     """Creates a socket that listens on a specified port.
 
     Args:
+        addr: ip address or "localhost" which will be used as a listening
+                socket for the server.
         port: int from 0 to 2^16. Low numbered ports have defined purposes. Almost
                 all predefined ports represent insecure protocols that have died out.
     Returns:
         An socket that implements TCP/IP.
     """
-    sockaddr = GetIPv6Addr("localhost", port)
+    sockaddr = GetIPv6Addr(addr, port)
 
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)

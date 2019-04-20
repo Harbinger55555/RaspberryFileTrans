@@ -5,8 +5,7 @@ from threading import Thread
 import aes
 import library
 import os
-
-LISTENING_PORT = 8080
+import sys
 
 class ClientThread(Thread):
 
@@ -34,8 +33,8 @@ class ClientThread(Thread):
             self.sock.close()
 
 
-def main():
-    server_socket = library.CreateServerSocket(LISTENING_PORT)
+def main(serverAddr, serverPort):
+    server_socket = library.CreateServerSocket(serverAddr, serverPort)
     clientThreads = []
     
     # Handle commands indefinitely (^C to exit)
@@ -64,5 +63,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
-
+    serverAddr = 'localhost'
+    serverPort = 8080
+    if len(sys.argv) > 1:
+        serverAddr = sys.argv[1]
+    if len(sys.argv) > 2:
+        serverPort = sys.argv[2]
+    main(serverAddr, serverPort)

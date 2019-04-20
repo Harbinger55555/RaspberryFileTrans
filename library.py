@@ -32,6 +32,7 @@ def CreateServerSocket(port):
     sockaddr = GetIPv6Addr("localhost", port)
 
     server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     server.bind(sockaddr)
     server.listen()
     return server

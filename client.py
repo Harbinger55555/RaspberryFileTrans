@@ -16,7 +16,7 @@ BLOCK_SIZE = 16
 def createFile(sock):
     with open('received_file', 'wb') as f:
         while True:
-            data = aes.decrypt(sock.recv(FILE_BATCH_SIZE))
+            data = aes.decrypt(sock.recv(1024))
             if not data:
                 break
             # Write data to the file
@@ -43,8 +43,8 @@ def main(serverAddr, serverPort):
     
     try:
         # Send the command line request to server and return the response.
-        startTime = time.time() 
-        clientSock.sendall(cmdLine.encode())
+        startTime = time.time()
+        clientSock.send(aes.encrypt(cmdLine.encode()))
         processResponse(clientSock)
         RTT = time.time() - startTime
         print("Round trip time = ", RTT)

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import aes
 import socket
 import time
 
@@ -51,7 +52,7 @@ def CreateClientSocket(server_addr, port):
 
 def ReadRequest(sock):
     """Read the request line from a socket. The request must end in newline."""
-    return sock.recv(COMMAND_BUFFER_SIZE).decode()
+    return aes.decrypt(sock.recv(COMMAND_BUFFER_SIZE)).decode()
 
 
 def ParseRequest(request):

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
+import aes
 import library
 import socket
 import sys
@@ -9,10 +10,13 @@ import time
 # Macro to indicate the max length of server's text response.
 MAX_SVR_RESP_TXT_LEN = 256
 
+# The block size determined by AES (Must be consistent with aes.py).
+BLOCK_SIZE = 16
+
 def createFile(sock):
     with open('received_file', 'wb') as f:
         while True:
-            data = sock.recv(1024)
+            data = aes.decrypt(sock.recv(FILE_BATCH_SIZE))
             if not data:
                 break
             # Write data to the file
@@ -20,12 +24,12 @@ def createFile(sock):
 
 
 def processResponse(sock):
-    restype = sock.recv(1)
+    restype = aes.decrypt(sock.recv(BLOCK_SIZE))
 
     # Simply print the error if response is a text, else make a file using the
     # bytes.
     if restype == b't':
-        print(sock.recv(MAX_SVR_RESP_TXT_LEN).decode().strip('\n'))
+        print(aes.decrypt(sock.recv(MAX_SVR_RESP_TXT_LEN)).decode().strip('\n'))
     elif restype == b'f':
         createFile(sock)
         print("File received and successfully created!")
@@ -57,3 +61,4 @@ if __name__=="__main__":
     if len(sys.argv) > 2:
         serverPort = sys.argv[2]
     main(serverAddr, serverPort)
+

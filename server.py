@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from threading import Thread
+import aes
 import library
 import os
 
@@ -19,12 +20,15 @@ class ClientThread(Thread):
             with open(self.filepath, 'rb') as f:
                 # Open the file in binary and send it to client.
                 filename = os.path.basename(self.filepath)
-                # TODO: attach filename.
-                self.sock.send(b'f' + f.read())
+                # TODO: Send filename.
+                # TODO: Send files in chunks if time allows.
+                self.sock.send(aes.encrypt(b'f'))
+                self.sock.send(aes.encrypt(f.read()))
 
         except FileNotFoundError:
             # Inform file not found.
-            self.sock.send(b'tFile not found!\n')
+            self.sock.send(aes.encrypt(b't'))
+            self.sock.send(aes.encrypt(b'File not found!\n'))
 
         finally:
             self.sock.close()
@@ -49,7 +53,8 @@ def main():
             clientThreads.append(newClientThread)
 
         else:
-            client_socket.send(('tInvalid request!\n').encode())
+            client_socket.send(aes.encrypt(b't'))
+            client_socket.send(aes.encrypt(b'Invalid request!\n'))
             client_socket.close()
 
     for t in clientThreads:
@@ -57,5 +62,7 @@ def main():
 
     server_socket.close()
 
+
 if __name__ == "__main__":
     main()
+

@@ -19,7 +19,6 @@ class ClientThread(Thread):
             with open(self.filepath, 'rb') as f:
                 # Open the file in binary and send it to client.
                 filename = os.path.basename(self.filepath)
-                # TODO: Send filename.
                 # TODO: Send files in chunks if time allows.
                 self.sock.send(aes.encrypt(b'f'))
                 self.sock.send(aes.encrypt(f.read()))

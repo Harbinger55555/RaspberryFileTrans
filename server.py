@@ -1,95 +1,84 @@
-from _thread import *
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from threading import Thread
+import aes
 import library
-import socket
-import threading
-PORT = 8080
-lock = threading.Lock()
+import os
+import sys
 
-def parseData(data):
+# Must be consistent with the one in AES.py.
+BLOCK_SIZE = 16
+
+class ClientThread(Thread):
+
+    def __init__(self, sock, filepath):
+        Thread.__init__(self)
+        self.sock = sock
+        self.filepath = filepath
+
+    def run(self):
+        try:
+            with open(self.filepath, 'rb') as f:
+                # Open the file in binary and send it to client.
+                filename = os.path.basename(self.filepath)
+                self.sock.send(aes.encrypt(b'f'))
+                sendEncryptedFile(f, self.sock)
+
+        except FileNotFoundError:
+            # Inform file not found.
+            self.sock.send(aes.encrypt(b't'))
+            self.sock.send(aes.encrypt(b'File not found!\n'))
+
+        finally:
+            self.sock.close()
+
+
+def sendEncryptedFile(f, sock):
+    """ Send the file in batches of size BLOCK_SIZE. Else, larger data will be
+        inconsistent on the client side.
     """
-    Parses a command and returns the command name and filename.
+    # batch must be less than BLOCK_SIZE for AES padding function to work properly.
+    batch = f.read(BLOCK_SIZE-1)
+    while batch != b'':
+        sock.send(aes.encrypt(batch))
+        batch = f.read(BLOCK_SIZE-1)
 
-    All commands are of the form:
-        COMMAND filename
 
-    Args:
-        data: string command and filename.
-    Returns:
-        command, filename. Each of these can be None.
-    """
-    args = data.strip().split(' ')
-    command = None
-    if args:
-        command = args[0]
-    else:
-        return None, None
-    data = None
-    if len(args) > 1:
-        data = ' '.join(args[2:])
-    else:
-        return command, None
-    return command, data
-
-def fileTransfer(filename, connection):
-    """
-    Transfers a file over a connection.
-
-    Args:
-        filename: string filename.
-        connection: socket being communicated over.
-    Returns:
-        N/A
-    """
-    file = open(filename, 'rb')
-    info = file.read(1024)
-    while (info):
-        connection.send(info)
-        info = file.read(1024)
-    file.close()
-
-def threadFunction(connection):
-    """
-    Thread handles a request over a connection.
-
-    Args:
-        connection: socket being communicated over.
-    Returns:
-        N/A
-    """
-    # Receives/sends data indefinitely. Use ^C to exit the program.
-    while True:
-        data = connection.recv(1024)
-        if not data:
-            print('Exiting\n')
-            lock.release()
-            break
-        command, filename = parseData(data)
-        if not (command or filename):
-            print('Invalid request\n')
-            lock.release()
-            break
-        fileTransfer(filename, connection)
-        connection.send(data)
-    connection.close()
-            
-
-def main():
-    """
-    Server driver creates a server socket that listens on a specified port
-    and creates threads to handle client requests when a connection is received.
-
-    Args:
-        N/A
-    Returns:
-        N/A
-    """
-    server_socket = library.CreateServerSocket(PORT)
+def main(serverAddr, serverPort):
+    server_socket = library.CreateServerSocket(serverAddr, serverPort)
+    clientThreads = []
+    
     # Handle commands indefinitely (^C to exit)
     while True:
-        client_socket, (address, port) = library.ConnectClientToServer(server_socket)
-        print('Received connection from %s:%d\n' % (address, port))
-        lock.acquire()
-        start_new_thread(threadFunction, (client_socket,))
+        # Wait until a client connects, then get a socket for the  client.
+        client_socket, addr = library.ConnectClientToServer(server_socket)
+        
+        # Read the request.
+        request = library.ReadRequest(client_socket)
+        command, filepath = library.ParseRequest(request)
+        
+        if command == 'GET' and filepath is not None:
+            newClientThread = ClientThread(client_socket, filepath)
+            newClientThread.start()
+            clientThreads.append(newClientThread)
+
+        else:
+            client_socket.send(aes.encrypt(b't'))
+            client_socket.send(aes.encrypt(b'Invalid request!\n'))
+            client_socket.close()
+
+    for t in clientThreads:
+        t.join()
+
     server_socket.close()
 
-main()
+
+if __name__ == "__main__":
+    serverAddr = 'localhost'
+    serverPort = 8080
+    if len(sys.argv) > 1:
+        serverAddr = sys.argv[1]
+    if len(sys.argv) > 2:
+        serverPort = sys.argv[2]
+    main(serverAddr, serverPort)

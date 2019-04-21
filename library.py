@@ -41,8 +41,15 @@ def CreateServerSocket(addr, port):
     return server
 
 
-def ConnectClientToServer(server_sock):
-	return server_sock.accept()
+def ConnectClientToServer(server_socket):
+    """Creates a socket that listens on a specified port.
+
+    Args:
+        server_socket: a socket that implements TCP/IP
+    Returns:
+        A socket and an address that is bound to that socket
+    """
+    return server_socket.accept()
 
 
 def CreateClientSocket(server_addr, port):
@@ -67,4 +74,3 @@ def ParseRequest(request):
     if len(args) > 1:
         filepath = ' '.join(args[1:])
     return command, filepath
-

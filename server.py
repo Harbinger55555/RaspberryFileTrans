@@ -7,6 +7,9 @@ import library
 import os
 import sys
 
+# Must be consistent with the one in AES.py.
+BLOCK_SIZE = 16
+
 class ClientThread(Thread):
 
     def __init__(self, sock, filepath):
@@ -19,9 +22,8 @@ class ClientThread(Thread):
             with open(self.filepath, 'rb') as f:
                 # Open the file in binary and send it to client.
                 filename = os.path.basename(self.filepath)
-                # TODO: Send files in chunks if time allows.
                 self.sock.send(aes.encrypt(b'f'))
-                self.sock.send(aes.encrypt(f.read()))
+                sendEncryptedFile(f, self.sock)
 
         except FileNotFoundError:
             # Inform file not found.
@@ -30,6 +32,17 @@ class ClientThread(Thread):
 
         finally:
             self.sock.close()
+
+
+def sendEncryptedFile(f, sock):
+    """ Send the file in batches of size BLOCK_SIZE. Else, larger data will be
+        inconsistent on the client side.
+    """
+    # batch must be less than BLOCK_SIZE for AES padding function to work properly.
+    batch = f.read(BLOCK_SIZE-1)
+    while batch != b'':
+        sock.send(aes.encrypt(batch))
+        batch = f.read(BLOCK_SIZE-1)
 
 
 def main(serverAddr, serverPort):

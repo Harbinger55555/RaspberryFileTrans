@@ -14,18 +14,24 @@ MAX_SVR_RESP_TXT_LEN = 256
 # The block size determined by AES (Must be consistent with aes.py).
 BLOCK_SIZE = 16
 
+# Variable to store the start time of a request.
+RTT_START = 0
+
 def createFile(addr, sock, filename):
     with open(str(addr) + '_' + filename, 'wb') as f:
         while True:
-            data = aes.decrypt(sock.recv(1024))
+            data = aes.decrypt(sock.recv(BLOCK_SIZE))
             if not data:
                 break
             # Write data to the file
             f.write(data)
-
+        
 
 def processResponse(addr, sock, filename):
     restype = aes.decrypt(sock.recv(BLOCK_SIZE))
+
+    # Round Trip time for the request is calculated when a response is obtained from the server.
+    RTT = time.time() - RTT_START
 
     # Simply print the error if response is a text, else make a file using the
     # bytes.
@@ -38,6 +44,8 @@ def processResponse(addr, sock, filename):
     else:
         print("Unknown response type...")
 
+    print("Rount trip time =", RTT)
+
 
 def main(serverAddr, serverPort):
     clientSock = library.CreateClientSocket(serverAddr, serverPort)
@@ -49,11 +57,9 @@ def main(serverAddr, serverPort):
     
     try:
         # Send the command line request to server and return the response.
-        startTime = time.time()
+        RTT_START = time.time()
         clientSock.send(aes.encrypt(cmdLine.encode()))
         processResponse(serverAddr, clientSock, filename)
-        RTT = time.time() - startTime
-        print("Round trip time = ", RTT)
     
     finally:
         clientSock.close()

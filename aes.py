@@ -9,7 +9,7 @@ BLOCK_SIZE = 16
 # TODO: Generate new keys for each session and share between parties secretly.
 # The character used for padding used to ensure that your value is always a
 # multiple of BLOCK_SIZE.
-PADDING = b'{'
+PADDING = b'|'
 KEY = b'Sixteen byte key'
 IV = b'Sixteen byte ivv'
 
@@ -32,4 +32,4 @@ def decrypt(encryptedString):
     cipher = AES.new(KEY, AES.MODE_CBC, IV)
     decoded = DecodeAES(cipher, encryption)
     return decoded
-
+    

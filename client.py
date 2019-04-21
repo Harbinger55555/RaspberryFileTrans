@@ -20,7 +20,14 @@ RTT_START = 0
 def createFile(addr, sock, filename):
     with open(str(addr) + '_' + filename, 'wb') as f:
         while True:
-            data = aes.decrypt(sock.recv(BLOCK_SIZE))
+            # The loop gets empty padLen and data before breaking out.
+            padLen = aes.decrypt(sock.recv(BLOCK_SIZE)).decode()
+            
+            if padLen:
+                data = aes.decrypt(sock.recv(BLOCK_SIZE), int(padLen))
+            else:
+                data = aes.decrypt(sock.recv(BLOCK_SIZE))
+
             if not data:
                 break
             # Write data to the file

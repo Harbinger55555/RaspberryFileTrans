@@ -14,7 +14,7 @@ KEY = b'Sixteen byte key'
 IV = b'Sixteen byte ivv'
 
 def encrypt(privateInfo):
-    pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * PADDING
+    pad = lambda s: s + (BLOCK_SIZE - len(s) % BLOCK_SIZE) * PADDING     
     # encrypt with AES, encode with base64
     EncodeAES = lambda c, s: c.encrypt(pad(s))
     # creates the cipher obj using the key
@@ -24,8 +24,11 @@ def encrypt(privateInfo):
     return encoded
 
 
-def decrypt(encryptedString):
-    DecodeAES = lambda c, e: c.decrypt(e).rstrip(PADDING)
+def decrypt(encryptedString, padLen=None):
+    if padLen is None:
+        DecodeAES = lambda c, e: c.decrypt(e).rstrip(PADDING)
+    else:
+        DecodeAES = lambda c, e: c.decrypt(e)[:-padLen]
     # Key is FROM the printout of 'secret' in encryption
     # below is the encryption.
     encryption = encryptedString

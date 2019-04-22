@@ -41,6 +41,8 @@ def sendEncryptedFile(f, sock):
     # batch must be less than BLOCK_SIZE for AES padding function to work properly.
     batch = f.read(BLOCK_SIZE-1)
     while batch != b'':
+        padLen = BLOCK_SIZE - len(batch)
+        sock.send(aes.encrypt(str(padLen).encode()))
         sock.send(aes.encrypt(batch))
         batch = f.read(BLOCK_SIZE-1)
 

@@ -13,7 +13,7 @@ import threading
 MAX_SVR_RESP_TXT_LEN = 256
 
 # The block size determined by AES (Must be consistent with aes.py).
-BLOCK_SIZE = 16
+BLOCK_SIZE = aes.BLOCK_SIZE
 
 # Dictionary of server addresses and ports to multi-thread request from.
 SERVER_ADDRS_AND_PORTS = {'localhost': 8080,
@@ -49,7 +49,7 @@ def processResponse(addr, sock, filename, rttStart):
     
     elif restype == b'f':
         createFile(addr, sock, filename)
-        print(f"File received from ({addr}) and successfully created!")
+        print("File received from ({}) and successfully created!".format(addr))
     else:
         print("Unknown response type...")
 

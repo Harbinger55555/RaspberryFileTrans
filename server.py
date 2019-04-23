@@ -8,7 +8,7 @@ import os
 import sys
 
 # Must be consistent with the one in AES.py.
-BLOCK_SIZE = 16
+BLOCK_SIZE = aes.BLOCK_SIZE
 
 class ClientThread(Thread):
 

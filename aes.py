@@ -4,7 +4,7 @@ import base64
 import os
 
 # The block size for cipher obj, can be 16 24 or 32. 16 matches 128 bit.
-BLOCK_SIZE = 16
+BLOCK_SIZE = 32
 
 # TODO: Generate new keys for each session and share between parties secretly.
 # The character used for padding used to ensure that your value is always a
@@ -18,7 +18,7 @@ def encrypt(privateInfo):
     # encrypt with AES, encode with base64
     EncodeAES = lambda c, s: c.encrypt(pad(s))
     # creates the cipher obj using the key
-    cipher = AES.new(KEY, AES.MODE_CBC, IV)
+    cipher = AES.new(KEY, AES.MODE_EAX, IV)
     # encodes you private info!
     encoded = EncodeAES(cipher, privateInfo)
     return encoded
@@ -32,7 +32,7 @@ def decrypt(encryptedString, padLen=None):
     # Key is FROM the printout of 'secret' in encryption
     # below is the encryption.
     encryption = encryptedString
-    cipher = AES.new(KEY, AES.MODE_CBC, IV)
+    cipher = AES.new(KEY, AES.MODE_EAX, IV)
     decoded = DecodeAES(cipher, encryption)
     return decoded
     

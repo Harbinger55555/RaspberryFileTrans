@@ -7,6 +7,7 @@ import os
 import socket
 import sys
 import time
+import threading
 
 # Macro to indicate the max length of server's text response.
 MAX_SVR_RESP_TXT_LEN = 256
@@ -14,8 +15,9 @@ MAX_SVR_RESP_TXT_LEN = 256
 # The block size determined by AES (Must be consistent with aes.py).
 BLOCK_SIZE = 16
 
-# Variable to store the start time of a request.
-RTT_START = 0
+# Dictionary of server addresses and ports to multi-thread request from.
+SERVER_ADDRS_AND_PORTS = {'localhost': 8080,
+                          '127.0.0.1': 9900,}
 
 def createFile(addr, sock, filename):
     with open(str(addr) + '_' + filename, 'wb') as f:
@@ -34,11 +36,11 @@ def createFile(addr, sock, filename):
             f.write(data)
         
 
-def processResponse(addr, sock, filename):
+def processResponse(addr, sock, filename, rttStart):
     restype = aes.decrypt(sock.recv(BLOCK_SIZE))
 
     # Round Trip time for the request is calculated when a response is obtained from the server.
-    RTT = time.time() - RTT_START
+    RTT = time.time() - rttStart
 
     # Simply print the error if response is a text, else make a file using the
     # bytes.
@@ -47,38 +49,61 @@ def processResponse(addr, sock, filename):
     
     elif restype == b'f':
         createFile(addr, sock, filename)
-        print("File received and successfully created!")
+        print(f"File received from ({addr}) and successfully created!")
     else:
         print("Unknown response type...")
 
     print("Rount trip time =", RTT)
 
 
-def main(serverAddr, serverPort):
-    clientSock = library.CreateClientSocket(serverAddr, serverPort)
+def getFileRequest():
     cmdLine = input()
     command, filepath = library.ParseRequest(cmdLine)
     filename = ''
     if filepath:
         filename = os.path.basename(filepath)
+
+    return cmdLine, filename
+
+
+def requestFromServer(serverAddr, serverPort, cmdLine, filename):
+    clientSock = library.CreateClientSocket(serverAddr, serverPort)
     
     try:
         # Send the command line request to server and return the response.
-        global RTT_START
-        RTT_START = time.time()
+        rttStart = time.time()
         clientSock.send(aes.encrypt(cmdLine.encode()))
-        processResponse(serverAddr, clientSock, filename)
+        processResponse(serverAddr, clientSock, filename, rttStart)
     
     finally:
         clientSock.close()
 
 
-if __name__=="__main__":
+def multiRequest(serverAddrsAndPorts, cmdLine, filename):
+    ts = []
+    for addr, port in serverAddrsAndPorts.items():
+        t = threading.Thread(target=requestFromServer, 
+                             args=(addr, port, cmdLine, filename))
+        t.start()
+    
+    for t in ts:
+        t.join()
+
+
+def main():
     serverAddr = 'localhost'
     serverPort = 8080
+    cmdLine, filename = getFileRequest()
     if len(sys.argv) > 1:
+        if sys.argv[1] == '-m':
+            multiRequest(SERVER_ADDRS_AND_PORTS, cmdLine, filename)
+            return
         serverAddr = sys.argv[1]
     if len(sys.argv) > 2:
         serverPort = sys.argv[2]
-    main(serverAddr, serverPort)
+    requestFromServer(serverAddr, serverPort, cmdLine, filename)
+
+
+if __name__=="__main__":
+    main()
 

@@ -64,6 +64,7 @@ def main(serverAddr, serverPort):
     
     try:
         # Send the command line request to server and return the response.
+        global RTT_START
         RTT_START = time.time()
         clientSock.send(aes.encrypt(cmdLine.encode()))
         processResponse(serverAddr, clientSock, filename)
